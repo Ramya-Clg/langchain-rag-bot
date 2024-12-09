@@ -1,34 +1,24 @@
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
+import os
+import streamlit as st
 from dotenv import load_dotenv
 load_dotenv()
 
-import streamlit as st
-import os
-import google.generativeai as genai
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a helpful assistant.Please respond to the queries"),
+    ("user", "Question: {question}"),
+])
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+st.title("Chatbot")
+input_text = st.text_input("Enter your question")
+llm = ChatGoogleGenerativeAI(
+    model = "gemini-1.5-flash",
+    temperature=0.5
+)
+output_parser = StrOutputParser()
+chain = prompt | llm | output_parser
 
-model = genai.GenerativeModel("gemini-1.5-flash")
-chat = model.start_chat(history=[])
-
-def get_gemini_response(question):
-    response = model.generate_content(question,stream=True)
-    return response
-
-st.set_page_config(page_title="Chatbot", page_icon="🦏")
-st.header("Gemini llm app")
-
-if 'chat_history' not in st.session_state:
-    st.session_state['chat_history'] = []
-    
-input = st.text_input("Ask a question to Gemini",key="input")
-submit = st.button("Submit")
-if submit and input:
-    response = get_gemini_response(input)
-    st.session_state['chat_history'].append(("You",input))
-    st.subheader("The response from Gemini:")
-    for chunk in response:
-        st.markdown(chunk.text + "",unsafe_allow_html=True)
-    st.session_state['chat_history'].append(("Gemini",response.text))
-st.subheader("Chat History")
-for role,text in st.session_state['chat_history']:
-    st.write(f"{role}: {text}") 
+if input_text:
+    st.write(chain.invoke({"question": input_text}))
