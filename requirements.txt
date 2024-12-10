@@ -9,3 +9,7 @@ fastapi
 uvicorn
 langchain_huggingface
 sse_starlette
+beautifulsoup4
+langchain-groq
+groq
+faiss-cpu
